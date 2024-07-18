@@ -428,3 +428,300 @@ def Accesos_Aplicaticos(Tabla):
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #> 
+def Aplicativos_Mayor_Uso(Tabla):
+    '''  '''
+    r = Tabla.EMPLEADO.values
+    labels =  Tabla.APLICATIVO.values
+    
+    cmap = mcolors.LinearSegmentedColormap.from_list("", ['#990033', '#808080', '#006666'])
+    num_classes = len(Tabla.APLICATIVO)
+    colors = [mcolors.to_hex(cmap(i / (num_classes - 1))) for i in range(num_classes)]
+    
+    num_slices = len(r)
+    theta = [(i + 0.5) * 360 / num_slices for i in range(num_slices)]
+    width = [360 / num_slices for _ in range(num_slices)]
+             
+    barpolar_plots = [go.Barpolar(r = [r_value], 
+                                  theta = [t], 
+                                  width = [w], 
+                                  name = n, 
+                                  marker_color = [c],
+                                  marker_line_color = 'white',
+                                  marker_line_width = 2,
+                                  hovertemplate = f'{n}<br>Total: {r_value}<extra></extra>'
+                                 )
+                      for r_value, t, w, n, c in zip(r, theta, width, labels, colors)
+                     ]
+    
+    ROSE_USO = go.Figure(barpolar_plots)
+    
+    ROSE_USO.update_layout(template = None,
+                           title = "",
+                           polar = dict(radialaxis = dict(showgrid = True,
+                                                          gridcolor = 'gray',
+                                                          gridwidth = 0.2,
+                                                          griddash = 'dot',
+                                                          showline = False,
+                                                          range = [Tabla.EMPLEADO.values.min(), 
+                                                                   Tabla.EMPLEADO.values.max()],
+                                                          showticklabels = True,
+                                                          tickfont = dict(color = 'Black')),
+                                        angularaxis=dict(showgrid = True,
+                                                         gridcolor = 'gray',
+                                                         gridwidth = 1,
+                                                         griddash = 'dot',
+                                                         showline = False,
+                                                         showticklabels = False,
+                                                         ticks = '')
+                                       ),
+                           hoverlabel = dict(
+                               font=dict(family = "Montserrat",
+                                         size = 14,
+                                         color = "white")
+                           )
+                          )
+    
+    ROSE_USO.layout.legend.update(title=dict(text='Aplicativos por Puestos',
+                                             font=dict(size=12),
+                                             side='top')
+                                 )
+    
+    ROSE_USO.update_layout(title_font_size = 12,
+                           title_x = 0.5,
+                           font=dict(family = "Montserrat",
+                                     size = 16,
+                                     color = '#000000'),
+                           legend=dict(orientation = "h",
+                                       yanchor = "auto",
+                                       y = -0.2,
+                                       xanchor = "center",
+                                       x = 0.5,
+                                       title_font = dict(size = 12),
+                                       font = dict(size = 10),
+                                       traceorder = "normal"),
+                           width = 1000,
+                           height = 600,
+                           margin = {"r": 40, "t": 40, "l": 40, "b": 40}
+                          )
+    return (ROSE_USO)
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
+def Total_Aplicativo(Tabla):
+    ''' '''
+    Tabla['DESCONCENTRADA_ORD'] = Tabla['DESCONCENTRADA'].astype(str) + ' '
+    unique_positions = Tabla['DESCONCENTRADA_ORD'].unique()
+    num_positions = len(unique_positions)
+
+    cmap = mcolors.LinearSegmentedColormap.from_list("", ['#990033','#808080', '#006666'])
+
+    if num_positions > 1:
+        colors = [mcolors.to_hex(cmap(i/(num_positions -1))) for i in range(num_positions)]
+    else:
+        colors = [mcolors.to_hex(cmap(0))]
+
+    #colors = [mcolors.to_hex(cmap(i / (num_positions - 1))) for i in range(num_positions)]
+
+    color_map = dict(zip(unique_positions, colors))
+    
+    TOTAL_APP = px.bar(Tabla, y='APLICATIVO',
+                       x = 'DESCONCENTRADA_ORD',
+                       orientation = 'v',
+                       color = 'DESCONCENTRADA_ORD',
+                       color_discrete_map = color_map,
+                       text = 'APLICATIVO')
+    
+    TOTAL_APP.update_traces(marker_line_width = 0.5,
+                            textposition = 'auto',
+                            hovertemplate = None, 
+                            hoverinfo = 'none')
+    TOTAL_APP.update_layout(plot_bgcolor = 'white', 
+                            xaxis_title = "",
+                            yaxis_title = "No. Aplicativos",
+                            yaxis = dict(showticklabels = False), 
+                            xaxis = dict(showticklabels = False,
+                                       categoryorder = 'total descending'),
+                            margin = {"r": 0, "t": 0, "l": 0, "b": 0}, 
+                            legend_title_text = 'Puestos',
+                            legend=dict(orientation = "h",
+                                        yanchor = "top",
+                                        y = -0.1,
+                                        xanchor = "center",
+                                        x = 0.5,
+                                        title_font = dict(size = 12),
+                                        font = dict(size = 10),
+                                        traceorder = "normal"
+                                       )
+                           )
+    TOTAL_APP.layout.legend.update(title = dict(text = 'Puestos',
+                                                font = dict(size = 12), 
+                                                side = 'top'))
+    TOTAL_APP.update_layout(title_font_size = 10,
+                            title_x = 0.5,
+                            font = dict(family = "Montserrat",
+                                        size = 12,
+                                        color = '#000000')
+                           )
+    return (TOTAL_APP)
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
+def Puestos_Aplicativos (Tabla):
+    ''' '''
+    cmap = mcolors.LinearSegmentedColormap.from_list("", ['#990033', '#808080', '#006666'])
+    num_apps = len(Tabla)
+    colors = [mcolors.to_hex(cmap(i / (num_apps - 1))) for i in range(num_apps)]
+
+    max_value = Tabla['APLICATIVO'].max()
+    pull_values = [0.1 if val > 0.9 * max_value else 0 for val in Tabla['APLICATIVO']]
+
+    PASTEL_APP = px.pie(Tabla,
+                        names = 'PUESTO_NOM',
+                        values = 'APLICATIVO')
+    
+    PASTEL_APP.update_traces(pull = pull_values,
+                             marker = dict(colors = colors,
+                                           line = dict(color = '#FFFFFF',
+                                                       width = 0.5)),
+                             textposition ='outside',
+                             textinfo ='label+percent', 
+                             insidetextorientation = 'radial',
+                             hovertemplate = None, 
+                             hoverinfo= 'none'
+                            )
+    PASTEL_APP.update_traces(pull = pull_values, marker=dict(colors=colors), hole=0)
+    PASTEL_APP.update_layout(title_font_size = 12,
+                             title_x = 0.5,
+                             font = dict( family = "Montserrat",
+                                         size = 10,
+                                         color = '#000000'),
+                             template = None,
+                             showlegend = False,
+                             margin = {"r": 0, "t": 0, "l": 0, "b": 30},
+                             uniformtext=dict(minsize=10, mode ='hide')
+                            )
+    return (PASTEL_APP)
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
+def Puestos_Mayor_sistemas(Tabla):
+    ''' '''
+    Tabla['PUESTO_NOM_ORD'] = Tabla['PUESTO_NOM'].astype(str) + ' '
+    unique_positions = Tabla['PUESTO_NOM_ORD'].unique()
+    num_positions = len(unique_positions)
+
+
+    cmap = mcolors.LinearSegmentedColormap.from_list("", ['#990033','#808080', '#006666'])
+
+    if num_positions > 1:
+        colors = [mcolors.to_hex(cmap(i/(num_positions -1))) for i in range(num_positions)]
+    else:
+        colors = [mcolors.to_hex(cmap(0))]
+    
+    color_map = dict(zip(unique_positions, colors))
+    
+    BAR_PUESTOS = px.bar(Tabla,
+                         x = "APLICATIVO",
+                         y = "PUESTO_NOM_ORD",
+                         orientation = 'h',
+                         text = Tabla["APLICATIVO"],
+                         color = 'PUESTO_NOM_ORD',
+                         color_discrete_map = color_map,
+                         title = ""
+                        )
+    BAR_PUESTOS.update_layout(yaxis = dict(side = 'right'),
+                              xaxis = dict(autorange = 'reversed')
+                             )
+    BAR_PUESTOS.update_traces(marker_line_width = 0.5,
+                              textposition = 'auto',
+                              hovertemplate = None, 
+                              hoverinfo = 'none')
+    BAR_PUESTOS.update_layout(plot_bgcolor = 'white', 
+                              xaxis_title = "",
+                              yaxis_title = "No. Aplicativos",
+                              yaxis = dict(showticklabels = False), 
+                              xaxis = dict(showticklabels = False,
+                                           categoryorder = 'total descending'),
+                              margin = {"r": 30, "t": 30, "l": 30, "b": 30}, 
+                              legend_title_text = 'Puestos',
+                              legend=dict(orientation = "h",
+                                          yanchor = "top",
+                                          y = -0.1,
+                                          xanchor = "center",
+                                          x = 0.5,
+                                          title_font = dict(size = 12),
+                                          font = dict(size = 10),
+                                          traceorder = "normal"
+                                         )
+                             )
+    BAR_PUESTOS.layout.legend.update(title = dict(text = 'Puestos',
+                                                  font = dict(size = 12), 
+                                                  side = 'left'))
+    BAR_PUESTOS.update_layout(title_font_size = 10,
+                              title_x = 0.5,
+                              font = dict(family = "Montserrat",
+                                          size = 12,
+                                          color = '#000000')
+                             )
+    return (BAR_PUESTOS)
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
+def Tabla_App_Servicos (Tabla):
+    ''' '''
+    TB = Tabla.groupby(['NOMBRE_EMP','RFC_CORTO','PUESTO_NOM',
+                        'APLICATIVO', 'ROL_APP', 'ALCANCE_ROL'])['PTO_RIESGO'].nunique()\
+                      .reset_index().drop(['PTO_RIESGO'], axis =1)
+    
+    grouped = TB.groupby('NOMBRE_EMP').agg(list).reset_index()
+    
+    nombre_emp = []
+    rfc_corto = []
+    puesto_nom = []
+    aplicativo = []
+    rol_app = []
+    alcance_rol = []
+    rowspans = []
+    
+    for i, row in grouped.iterrows():
+        num_roles = len(row['PUESTO_NOM'])
+        nombre_emp.extend([row['NOMBRE_EMP']] + [''] * (num_roles - 1))
+        rfc_corto.extend([row['RFC_CORTO'][0]] + [''] * (num_roles - 1))
+        puesto_nom.extend(row['PUESTO_NOM'])
+        aplicativo.extend(row['APLICATIVO'])
+        rol_app.extend(row['ROL_APP'])
+        alcance_rol.extend(row['ALCANCE_ROL'])
+        rowspans.append(num_roles)
+
+    LA_TABLA = go.Figure(data = [go.Table(header = dict(values = list(TB.columns),
+                                                        fill_color='#B38E5D',
+                                                        font=dict(color='#FFFFFF'),
+                                                        align='center'),
+                                          cells = dict(
+                                              values = [nombre_emp, rfc_corto, 
+                                                        puesto_nom, aplicativo, 
+                                                        rol_app, alcance_rol],
+                                              fill_color = '#FFFFFF', 
+                                              align = 'left',
+                                              line_color = '#000000')
+                                         )
+                                ]
+                        )
+    LA_TABLA.update_layout(title_font_size = 12,
+                           title_x = 0.5,
+                           font = dict( family = "Montserrat",
+                                       size = 12,
+                                       color = '#000000'),
+                           template = None, showlegend = False,
+                           margin = {"r": 10, "t": 30, "l": 10, "b": 0},
+                           uniformtext = dict(minsize = 10, mode ='hide')
+                          )
+    return (LA_TABLA)
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
