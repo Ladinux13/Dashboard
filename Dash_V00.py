@@ -48,7 +48,10 @@ Spatial = read_map(Entradas + 'UAD_FILE.json')
 
 tab1, tab2, tab3, tab4 = st.tabs(["Generales", "Riesgos", "Aplicativos", "Denuncias"])
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
 with tab1:
 
     st.write("Contenido General")
@@ -65,7 +68,10 @@ with tab1:
 
     st.plotly_chart(Barras_Riesgo, use_container_width=True)
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
 with tab2:
 
     st.write("Contenido de Riesgos")
@@ -162,8 +168,77 @@ with tab2:
 
         st.plotly_chart(Empleado_App, use_container_width=True)
     
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
 with tab3:
+
     st.write("Contenido de Aplicativos")
+
+    TOT_APP = BASE_USO.groupby('DESCONCENTRADA')['APLICATIVO'].nunique().reset_index().sort_values(by=['APLICATIVO'], ascending=False)
+    BAR_APLICA = Total_Aplicativo(TOT_APP)
+    st.plotly_chart(BAR_APLICA, use_container_width=True)
+
+    TOT_APP_PUESTO = BASE_USO.groupby('PUESTO_NOM')['APLICATIVO'].nunique().reset_index().sort_values(by=['APLICATIVO'], ascending=False)
+    TOTAL_PUESTOS_APP = Puestos_Aplicativos (TOT_APP_PUESTO)
+    st.plotly_chart(TOTAL_PUESTOS_APP, use_container_width=True)
+
+# > Filtro Empleado Aplicado
+
+    A1 = BASE_USO["DESCONCENTRADA"].unique().tolist()
+    A2  = []
+    A2 = l1[:]
+    A2.append('TODAS')
+    Deconc_drop = st.multiselect('DESCONCENTRADA', A2, default = 'TODAS', key='Deconc_drop')
+    if 'TODAS' in Deconc_drop:
+        Deconc_drop = A1
+
+# > Filtro Puesto Aplicado
+    
+    BASE_USO_F3 = BASE_USO.query("DESCONCENTRADA == @Deconc_drop")
+
+    if BASE_USO_F3.empty:
+        st.warning("No hay datos disponibles para la selección actual.")
+    else:
+        PUESTO_SISTEMAS = BASE_USO_F3.groupby('PUESTO_NOM')['APLICATIVO'].nunique().reset_index().sort_values(by=['APLICATIVO'], ascending=False)
+        SISTEMAS_PUESTO = Puestos_Mayor_sistemas(PUESTO_SISTEMAS)
+        st.plotly_chart(SISTEMAS_PUESTO, use_container_width=True)
+        
+        APLICATIVOS_USO = BASE_USO_F3.groupby('APLICATIVO')['EMPLEADO'].\
+                  count().reset_index().sort_values(by=['EMPLEADO'], ascending=False).head(10)
+        ROSA = Aplicativos_Mayor_Uso(APLICATIVOS_USO)
+        st.plotly_chart(ROSA, use_container_width=True)
+
+        # > Filtro Puesto Nombre
+        PT1 = BASE_USO_F3["PUESTO_NOM"].unique().tolist()
+        PT2 = PT1[:]
+        PT2.append('TODOS')
+        PUESTO_drop = st.multiselect('PUESTO', PT2, default = 'TODOS', key='PUESTO_drop')
+        if 'TODOS' in PUESTO_drop:
+            PUESTO_drop = PT1
+        else:
+            PUESTO_drop = [r for r in PUESTO_drop if r in PT1]
+
+        BASE_USO_F4 = BASE_USO_F3.query("PUESTO_NOM == @PUESTO_drop")
+
+        # > Filtro Puesto Nombre - Empleado
+        ET1 = BASE_USO_F4["NOMBRE_EMP"].unique().tolist()
+        ET2 = ET1[:]
+        ET2.append('TODOS')
+        EMPLET_drop = st.multiselect('EMPLEADO', ET2, default = 'TODOS', key='EMPLET_drop')
+        if 'TODOS' in EMPLET_drop:
+            EMPLET_drop = ET1
+        else:
+            EMPLET_drop = [s for s in EMPLET_drop if s in ET1]
+
+        BASE_USO_F5 = BASE_USO_F4.query("NOMBRE_EMP == @EMPLET_drop")
+        TABLA_APPS =  Tabla_App_Servicos(BASE_USO_F5)
+        st.plotly_chart(TABLA_APPS, use_container_width=True)
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
 with tab4:
     st.write("Contenido de Denuncias")
