@@ -671,14 +671,21 @@ def Puestos_Mayor_sistemas(Tabla):
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #>
-def Tabla_App_Servicos (Tabla):
-    ''' '''
+def Tabla_App_Servicos(Tabla):
+    def renombrar_columnas(tabla, nuevos_nombres):
+        tabla.columns = nuevos_nombres
+        return tabla
+    
+    nuevos_nombres = ['Nombre Empleado', 'RFC corto', 'Puesto', 'Aplicativo', 'ROL', 'Alcance ROL']
+
     TB = Tabla.groupby(['NOMBRE_EMP','RFC_CORTO','PUESTO_NOM',
                         'APLICATIVO', 'ROL_APP', 'ALCANCE_ROL'])['PTO_RIESGO'].nunique()\
-                      .reset_index().drop(['PTO_RIESGO'], axis =1)
-    
-    grouped = TB.groupby('NOMBRE_EMP').agg(list).reset_index()
-    
+                      .reset_index().drop(['PTO_RIESGO'], axis=1)
+
+    TB = renombrar_columnas(TB, nuevos_nombres)
+
+    grouped = TB.groupby('Nombre Empleado').agg(list).reset_index()
+
     nombre_emp = []
     rfc_corto = []
     puesto_nom = []
@@ -686,39 +693,38 @@ def Tabla_App_Servicos (Tabla):
     rol_app = []
     alcance_rol = []
     rowspans = []
-    
+
     for i, row in grouped.iterrows():
-        num_roles = len(row['PUESTO_NOM'])
-        nombre_emp.extend([row['NOMBRE_EMP']] + [''] * (num_roles - 1))
-        rfc_corto.extend([row['RFC_CORTO'][0]] + [''] * (num_roles - 1))
-        puesto_nom.extend(row['PUESTO_NOM'])
-        aplicativo.extend(row['APLICATIVO'])
-        rol_app.extend(row['ROL_APP'])
-        alcance_rol.extend(row['ALCANCE_ROL'])
+        num_roles = len(row['Puesto'])
+        nombre_emp.extend([row['Nombre Empleado']] + [''] * (num_roles - 1))
+        rfc_corto.extend([row['RFC corto'][0]] + [''] * (num_roles - 1))
+        puesto_nom.extend(row['Puesto'])
+        aplicativo.extend(row['Aplicativo'])
+        rol_app.extend(row['ROL'])
+        alcance_rol.extend(row['Alcance ROL'])
         rowspans.append(num_roles)
 
-    LA_TABLA = go.Figure(data = [go.Table(header = dict(values = list(TB.columns),
-                                                        fill_color='#B38E5D',
-                                                        font=dict(color='#FFFFFF'),
-                                                        align='center'),
-                                          cells = dict(
-                                              values = [nombre_emp, rfc_corto, 
-                                                        puesto_nom, aplicativo, 
-                                                        rol_app, alcance_rol],
-                                              fill_color = '#FFFFFF', 
-                                              align = 'left',
-                                              line_color = '#000000')
-                                         )
-                                ]
+    LA_TABLA = go.Figure(data=[go.Table(header=dict(values=list(TB.columns),
+                                                    fill_color='#B38E5D',
+                                                    font=dict(color='#FFFFFF'),
+                                                    align='center'),
+                                        cells=dict(values=[nombre_emp, rfc_corto, 
+                                                           puesto_nom, aplicativo, 
+                                                           rol_app, alcance_rol],
+                                                   fill_color='#FFFFFF', 
+                                                   align='left',
+                                                   line_color='#000000')
+                                       )
+                               ]
                         )
-    LA_TABLA.update_layout(title_font_size = 12,
-                           title_x = 0.5,
-                           font = dict( family = "Montserrat",
-                                       size = 12,
-                                       color = '#000000'),
-                           template = None, showlegend = False,
-                           margin = {"r": 10, "t": 30, "l": 10, "b": 0},
-                           uniformtext = dict(minsize = 10, mode ='hide')
+    LA_TABLA.update_layout(title_font_size=12,
+                           title_x=0.5,
+                           font=dict(family="Montserrat",
+                                     size=12,
+                                     color='#000000'),
+                           template=None, showlegend=False,
+                           margin={"r": 10, "t": 30, "l": 10, "b": 0},
+                           uniformtext=dict(minsize=10, mode='hide')
                           )
     return (LA_TABLA)
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
