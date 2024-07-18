@@ -8,7 +8,9 @@ import geopandas as gpd
 from DashFunciones import Totales_Menu, Mapa_Menu, Puestos_Menu
 from DashFunciones import Riesgo_Puestos_Menu, Quejas_Denuncias_Riesgos, Cofiabilidad
 from DashFunciones import Nivel_Riesgos_Atencion, Queja_Denuncia, Detalle_Aplicativos
-from DashFunciones import Tabla_Aplicativos, Accesos_Aplicaticos
+from DashFunciones import Tabla_Aplicativos, Accesos_Aplicaticos, Aplicativos_Mayor_Uso
+from DashFunciones import Total_Aplicativo, Puestos_Aplicativos, Puestos_Mayor_sistemas
+from DashFunciones import Tabla_App_Servicos
 
 import warnings
 warnings.filterwarnings("ignore",
