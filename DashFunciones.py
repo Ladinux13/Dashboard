@@ -672,6 +672,7 @@ def Puestos_Mayor_sistemas(Tabla):
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #>
 def Tabla_App_Servicos(Tabla):
+    ''' '''
     def renombrar_columnas(tabla, nuevos_nombres):
         tabla.columns = nuevos_nombres
         return tabla
