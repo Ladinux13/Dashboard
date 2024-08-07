@@ -5,6 +5,7 @@
 #%%%%%%%%%%%%%%%% Librerias %%%%%%%%%%%%%%%%
 
 import os
+import pandas as pd
 import streamlit as st
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -160,13 +161,22 @@ def Content_Niveles_Riesgo(NIVEL_RIESGO):
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ##
-# Empleado Riesgos App
+# Contenedor Acceso a la información
 
 def Content_Acceso_Info(BASE_USO_F3):
 
-    ROL_APP = BASE_USO_F3.ROL_APP.sum()
-    PER_APP = round(((BASE_USO_F3.iloc[0, 2]) * 100) / (ROL_APP), 2)
-    TOTL_APP = BASE_USO_F3.APLICATIVO.count()
+    if len(BASE_USO_F3) > 0:
+        EMPLEADO = BASE_USO_F3.iloc[0, 0] if not pd.isna(BASE_USO_F3.iloc[0, 0]) else 0
+        APLICATIVO = BASE_USO_F3.iloc[0, 1] if not pd.isna(BASE_USO_F3.iloc[0, 1]) else 0
+        ROLES = BASE_USO_F3.iloc[0, 2] if not pd.isna(BASE_USO_F3.iloc[0, 2]) else 0
+    else:
+        EMPLEADO = 0
+        APLICATIVO = 0
+        ROLES = 0
+
+    ROL_APP = BASE_USO_F3.ROL_APP.sum() if not BASE_USO_F3.empty else 0
+    PER_APP = round((ROLES * 100) / ROL_APP, 2) if ROL_APP != 0 else 0
+    TOTL_APP = BASE_USO_F3.APLICATIVO.count() if not BASE_USO_F3.empty else 0
     
     html_content = f"""
     <div class="container-fluid" style="height: 100%; width: 100%;">
@@ -176,8 +186,36 @@ def Content_Acceso_Info(BASE_USO_F3):
                     <div class="card-body" style="height: 100%;">
                         <h6 class="card-title"><b>ACCESO A SISTEMAS INFORMÁTICOS</b></h6>
                         <p class="card-text" style="text-left: justify; font-size: 13px;">
-                            El empleado <b>{BASE_USO_F3.iloc[0,0]}</b> cuenta con un total de <b>{ROL_APP}</b> roles distintos distribuidos en <b>{TOTL_APP}</b> aplicativos. 
-                            El aplicativo con mayor importancia (<b>{PER_APP}%</b>) corresponde a <b>{BASE_USO_F3.iloc[0,1]}</b> con <b>{BASE_USO_F3.iloc[0,2]}</b> roles disntitos.
+                            El empleado <b>{EMPLEADO}</b> cuenta con un total de <b>{ROL_APP}</b> roles distintos distribuidos en <b>{TOTL_APP}</b> aplicativos. 
+                            El aplicativo con mayor importancia (<b>{PER_APP}%</b>) corresponde a <b>{APLICATIVO}</b> con <b>{ROLES}</b> roles distintos.
+                        </p>                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    return html_content
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## 
+# Contenedor total de aplicativos por desconcentrada
+
+def Content_TotApp_Desonce(TOT_APP):
+
+    DESCO = TOT_APP.iloc[0, 0]
+    DES_T = TOT_APP.iloc[0, 1]
+    
+    html_content = f"""
+    <div class="container-fluid" style="height: 100%; width: 100%;">
+        <div class="row" style="height: 100%;">
+            <div class="col-12" style="height: 100%;">
+                <div class="card" style="width: 100%; height: 100%; border: 2px solid #FFFFFF;">
+                    <div class="card-body" style="height: 100%;">
+                        <h6 class="card-title"><b>TOTAL DE APLICATIVOS</b></h6>
+                        <p class="card-text" style="text-left: justify; font-size: 13px;">
+                            El mayor riesgo por aplicativos se identifica en la Desconcentrada de <b>{DESCO}</b>, con un total de <b>{DES_T}</b> aplicativos distintos en uso por sus empleados.
                         </p>                        
                     </div>
                 </div>
@@ -189,4 +227,93 @@ def Content_Acceso_Info(BASE_USO_F3):
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ## 
+# Contenedor total de aplicativos por desconcentrada
+def Content_TotApp_Puesto(TOT_APP_PUESTO):
 
+    SUM_P = TOT_APP_PUESTO.APLICATIVO.sum()
+    PSTR1 = TOT_APP_PUESTO.iloc[0, 0]
+    FRS1 = TOT_APP_PUESTO.iloc[0, 1]
+    PRS1 = round(((FRS1)*100)/(SUM_P),2)
+    PSTR2 = TOT_APP_PUESTO.iloc[1, 0]
+    FRS2 = TOT_APP_PUESTO.iloc[1, 1]
+    PRS2 = round(((FRS2 )*100)/(SUM_P),2)
+    
+    html_content = f"""
+    <div class="container-fluid" style="height: 100%; width: 100%;">
+        <div class="row" style="height: 100%;">
+            <div class="col-12" style="height: 100%;">
+                <div class="card" style="width: 100%; height: 100%; border: 2px solid #FFFFFF;">
+                    <div class="card-body" style="height: 100%;">
+                        <h6 class="card-title"><b>TOTAL DE APLICATIVOS POR PUESTOS</b></h6>
+                        <p class="card-text" style="text-left: justify; font-size: 13px;">
+                            El puesto <b>{PSTR1}</b> presenta el mayor riesgo al tener <b>{FRS1} ({PRS1}%)</b> aplicativos distintos en uso por los empleados. 
+                            El puesto con segundo riesgo corresponde a <b>{PSTR2}</b> con <b>{FRS2} ({PRS2}%)</b> aplicativos distintos.
+                        </p>                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    return html_content
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## 
+# Contenedor total de aplicativos por puesto
+def Content_App_Puesto(PUESTO_SISTEMAS):
+
+    DESCN = PUESTO_SISTEMAS.iloc[0,0] if not pd.isna(PUESTO_SISTEMAS.iloc[0,0]) else 0
+    PSTO1 = PUESTO_SISTEMAS.iloc[0,1] if not pd.isna(PUESTO_SISTEMAS.iloc[0,1]) else 0
+    VLTO1 = PUESTO_SISTEMAS.iloc[0,2] if not pd.isna(PUESTO_SISTEMAS.iloc[0,2]) else 0
+    PSTO2 = PUESTO_SISTEMAS.iloc[1,1] if len(PUESTO_SISTEMAS) > 1 and not pd.isna(PUESTO_SISTEMAS.iloc[1,1]) else 0
+    VLTO2 = PUESTO_SISTEMAS.iloc[1,2] if len(PUESTO_SISTEMAS) > 1 and not pd.isna(PUESTO_SISTEMAS.iloc[1,2]) else 0
+    
+    html_content = f"""
+    <div class="container-fluid" style="height: 100%; width: 100%;">
+        <div class="row" style="height: 100%;">
+            <div class="col-12" style="height: 100%;">
+                <div class="card" style="width: 100%; height: 100%; border: 2px solid #FFFFFF;">
+                    <div class="card-body" style="height: 100%;">
+                        <h6 class="card-title"><b>APLICATIVOS POR DESCONCETRADA Y PUESTO</b></h6>
+                        <p class="card-text" style="text-left: justify; font-size: 13px;">
+                            El puesto <b>{PSTO1}</b> en la Desconcentrada de <b>{DESCN}</b> se considera de mayor riesgo, con un total de <b>{VLTO1}</b> aplicativos distintos en uso por parte de sus empleados.
+                            El segundo puesto con mayor riesgo en la Desconcentrada corresponde a <b>{PSTO2}</b>, con <b>{VLTO2}</b> aplicativos en uso.
+                        </p>                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    return html_content
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## 
+# Contenedor Empleados por aplicativo en puesto
+def Content_App_Empleado(APLICATIVOS_USO):
+
+    DESCN = APLICATIVOS_USO.iloc[0,0] if not pd.isna(APLICATIVOS_USO.iloc[0,0]) else 0
+    PSTO1 = APLICATIVOS_USO.iloc[0,1] if not pd.isna(APLICATIVOS_USO.iloc[0,1]) else 0
+    VLTO1 = APLICATIVOS_USO.iloc[0,2] if not pd.isna(APLICATIVOS_USO.iloc[0,2]) else 0
+
+    PSTO2 = APLICATIVOS_USO.iloc[1,1] if len(APLICATIVOS_USO) > 1 and not pd.isna(APLICATIVOS_USO.iloc[1,1]) else 0
+    VLTO2 = APLICATIVOS_USO.iloc[1,2] if len(APLICATIVOS_USO) > 1 and not pd.isna(APLICATIVOS_USO.iloc[1,2]) else 0
+    
+    html_content = f"""
+    <div class="container-fluid" style="height: 100%; width: 100%;">
+        <div class="row" style="height: 100%;">
+            <div class="col-12" style="height: 100%;">
+                <div class="card" style="width: 100%; height: 100%; border: 2px solid #FFFFFF;">
+                    <div class="card-body" style="height: 100%;">
+                        <h6 class="card-title"><b>APLICATIVOS</b></h6>
+                        <p class="card-text" style="text-left: justify; font-size: 13px;">
+                            El aplicativo <b>{PSTO1}</b> en la Desconcentrada de <b>{DESCN}</b> se considera de mayor riesgo, con un total de <b>{VLTO1}</b> empleados asignados.
+                            El segundo puesto con mayor riesgo en la Desconcentrada corresponde al aplicativo <b>{PSTO2}</b>, con <b>{VLTO2}</b> empleados registrados.
+                        </p>                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    return html_content
