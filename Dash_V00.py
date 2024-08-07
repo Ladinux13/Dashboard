@@ -3,20 +3,24 @@
 import os
 import numpy as np
 import pandas as pd
+from io import BytesIO
 import streamlit as st
 import geopandas as gpd
+
 
 from DashFunciones import Totales_Menu, Mapa_Menu, Puestos_Menu
 from DashFunciones import Riesgo_Puestos_Menu, Quejas_Denuncias_Riesgos, Cofiabilidad
 from DashFunciones import Nivel_Riesgos_Atencion, Queja_Denuncia, Detalle_Aplicativos
 from DashFunciones import Tabla_Aplicativos, Accesos_Aplicaticos, Aplicativos_Mayor_Uso
 from DashFunciones import Total_Aplicativo, Puestos_Aplicativos, Puestos_Mayor_sistemas
-from DashFunciones import Tabla_App_Servicos
+from DashFunciones import Tabla_App_Servicos, Tabla_to_Excel
 
 
 from DashContent import Content_Map, Content_Dona, Content_Barras
 from DashContent import Content_Barra_Riesgo, Content_Confia_Riesgo
 from DashContent import Content_Niveles_Riesgo, Content_Acceso_Info
+from DashContent import Content_TotApp_Desonce, Content_TotApp_Puesto
+from DashContent import Content_App_Puesto, Content_App_Empleado
 
 
 
@@ -92,7 +96,14 @@ div.stAlert p {
 # Aplica el CSS
 st.markdown(css_succes, unsafe_allow_html=True)
 
-
+st.markdown("""
+        <style>
+        .stDownloadButton button {
+            background-color: #006666;
+            color: white;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ## Funciones para leer datos y mapa 
@@ -131,6 +142,8 @@ tab1, tab2, tab3, tab4 = st.tabs(["GENERAL", "RIESGOS", "APLICATIVOS", "DENUNCIA
 
 with tab1:
     st.success('INFORMACIÓN GENERAL')
+    st.markdown("""<p style="text-align: justify; font-size: 16px; font-style: italic;">
+                    Se presenta de forma general la información al riesgo y los puestos con mas alto riesgo de la Unidad.</p>""", unsafe_allow_html=True)
 
 ## Obtener totales (CVE_UNIDAD, TOTAL, SI_R, SI) usando la función Totales_Menu
     CVE_UNIDAD, TOTAL, SI_R, SI = Totales_Menu(BASE_USO)
@@ -199,7 +212,7 @@ with tab2:
     st.markdown("""<p style="text-align: justify; font-size: 16px; font-style: italic;">
                     Se presenta la información de manera gráfica, destacando los resultados relativos al riesgo por desconcentrada en función de los puestos, 
                     la información sobre quejas y denuncias, y los resultados relacionados con el nivel de confiabilidad.</p>""", unsafe_allow_html=True)
-    st.write('Aplicar y seleccionar por nombre de:')
+    st.write('Seleccionar y aplicar por:')
 
 ## Filtro por unidad administrativa desconcentrada
     l1 = BASE_USO["DESCONCENTRADA"].unique().tolist()
@@ -282,7 +295,7 @@ with tab2:
         st.markdown("""<p style="text-align: justify; font-size: 16px; font-style: italic;">
                     La tabla presenta información detallada sobre los empleados, incluyendo los puestos que ocupan, los roles asignados y 
                     los niveles de riesgo y atención asociados a cada puesto, en función de la desconcentrada seleccionada previamente.</p>""", unsafe_allow_html=True)
-        st.write('Aplicar y seleccionar por nombre de:')
+        st.write('Seleccionar y aplicar por:')
 
         filtered_base = BASE_USO_F1[~BASE_USO_F1['NIVEL_ATENCION'].isin(['NULO', 'BAJO'])]
         M1 = filtered_base["PUESTO_NOM"].unique().tolist()
@@ -309,7 +322,7 @@ with tab2:
         st.markdown("""<p style="text-align: justify; font-size: 16px; font-style: italic;">
                     La gráfica muestra a detalle el porcentaje de acceso a las aplicaciones, desglosado por empleado, 
                     en función del puesto y la desconcentrada a la que pertenece seleccionada previamente.</p>""", unsafe_allow_html=True)
-        st.write('Aplicar y seleccionar por nombre de:')
+        st.write('Seleccionar y aplicar por:')
 
         E1 = SISTEMA_INFORMATICO["NOMBRE_EMP"].unique().tolist()
         E2 = E1[:]
@@ -341,30 +354,50 @@ with tab2:
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 with tab3:
-    '''Contenido de Aplicativos
-    Esta sección muestra información sobre los aplicativos utilizados en el
-    dashboard.
-    Permite filtrar por unidad administrativa, puesto y empleado para obtener
-    resultados más específicos.'''
+    #'''Contenido de Aplicativos
+    #Esta sección muestra información sobre los aplicativos utilizados en el
+    #dashboard.
+    #Permite filtrar por unidad administrativa, puesto y empleado para obtener
+    #resultados más específicos.'''
     
-    st.write("Contenido de Aplicativos")
+    st.success('RIESGO POR APLICATIVOS - GENERAL')
+
+    st.markdown("""<p style="text-align: justify; font-size: 16px; font-style: italic;">
+                    Se presenta la información de manera gráfica, destacando los resultados relativos al riesgo por aplicativo en la desconcentrada 
+                    de forma general.</p>""", unsafe_allow_html=True)
 
 ## Mostrar gráfico de barras de aplicaciones por unidad administrativa
-    st31, st03 = st.columns(2)
-    
+    PR1, PR2 = st.columns([2,1])
     TOT_APP = BASE_USO.groupby('DESCONCENTRADA')['APLICATIVO'].nunique().reset_index().sort_values(by=['APLICATIVO'], ascending=False)
-    BAR_APLICA = Total_Aplicativo(TOT_APP)
-    st31.plotly_chart(BAR_APLICA, use_container_width=True)
-    st03.write('BLABLAHAHAH')
+
+    with PR1:
+        BAR_APLICA = Total_Aplicativo(TOT_APP)
+        st.plotly_chart(BAR_APLICA, use_container_width=True)
+
+    with PR2:
+        Cont_Apps = Content_TotApp_Desonce(TOT_APP)
+        st.markdown(Cont_Apps, unsafe_allow_html=True)
+
 
 ## Mostrar gráfico de barras de aplicaciones por puesto
-    st003, st32 = st.columns(2)
-    
+    AP_R1, AP_R2 = st.columns([1,2])
     TOT_APP_PUESTO = BASE_USO.groupby('PUESTO_NOM')['APLICATIVO'].nunique().reset_index().sort_values(by=['APLICATIVO'], ascending=False)
-    TOTAL_PUESTOS_APP = Puestos_Aplicativos (TOT_APP_PUESTO)
-    st003.write('BLABLAHAHAH')
-    st32.plotly_chart(TOTAL_PUESTOS_APP, use_container_width=True)
-           
+
+    with AP_R1:
+        PUES_APP = Content_TotApp_Puesto(TOT_APP_PUESTO)
+        st.markdown(PUES_APP, unsafe_allow_html=True)
+    
+    with AP_R2: 
+        TOTAL_PUESTOS_APP = Puestos_Aplicativos (TOT_APP_PUESTO)
+        st.plotly_chart(TOTAL_PUESTOS_APP, use_container_width=True)
+
+    st.success('RIESGO POR APLICATIVOS - DESCONCENTRADA Y PUESTO')
+
+    st.markdown("""<p style="text-align: justify; font-size: 16px; font-style: italic;">
+                    Se presenta la información de manera gráfica, destacando los resultados relativos al riesgo por aplicativo en la desconcentrada 
+                    en función de la información de puestos y empleados.</p>""", unsafe_allow_html=True)
+    st.write('Seleccionar y aplicar por:')
+
 ## Filtro por unidad administrativa desconcentrada
 
     A1 = BASE_USO["DESCONCENTRADA"].unique().tolist()
@@ -385,57 +418,84 @@ with tab3:
 
 ## Mostrar gráfico de barras de mayor cantidad de sistemas por puesto
     else:
-        st33, st0003 = st.columns(2) 
-        
-        PUESTO_SISTEMAS = BASE_USO_F3.groupby('PUESTO_NOM')['APLICATIVO'].nunique().reset_index().sort_values(by=['APLICATIVO'], ascending=False)
-        SISTEMAS_PUESTO = Puestos_Mayor_sistemas(PUESTO_SISTEMAS)
-        st33.plotly_chart(SISTEMAS_PUESTO, use_container_width=True)
-        st0003.write('BLABLAHAHAH')   
 
-        st00003, st34 = st.columns(2)
-        
-## Mostrar gráfico de barras de aplicaciones más utilizadas        
-        APLICATIVOS_USO = BASE_USO_F3.groupby('APLICATIVO')['EMPLEADO'].\
+        DP1, DP2 = st.columns([2,1])
+
+        with DP1:
+            PUESTO_SISTEMAS = BASE_USO_F3.groupby(['DESCONCENTRADA','PUESTO_NOM'])['APLICATIVO'].nunique().reset_index().sort_values(by=['APLICATIVO'], ascending=False)
+            SISTEMAS_PUESTO = Puestos_Mayor_sistemas(PUESTO_SISTEMAS)
+            st.plotly_chart(SISTEMAS_PUESTO, use_container_width=True)
+
+        with DP2:
+
+            PUESTO_DESCO = Content_App_Puesto(PUESTO_SISTEMAS)
+            st.markdown(PUESTO_DESCO, unsafe_allow_html=True) 
+
+## Mostrar gráfico de barras de aplicaciones más utilizadas  
+        RWID1, RWID2 = st.columns([1,2])
+
+        APLICATIVOS_USO = BASE_USO_F3.groupby(['DESCONCENTRADA','APLICATIVO'])['EMPLEADO'].\
                   count().reset_index().sort_values(by=['EMPLEADO'], ascending=False).head(10)
-        ROSA = Aplicativos_Mayor_Uso(APLICATIVOS_USO)
-        st00003.write('BLABLAHAHAH')
-        st34.plotly_chart(ROSA, use_container_width=True)
 
-        #PT1, ET1 = st.columns(2)   
+        with RWID1:
+            PUESTO_APP = Content_App_Empleado(APLICATIVOS_USO)
+            st.markdown(PUESTO_APP, unsafe_allow_html=True) 
+
+        with RWID2:
+            ROSA = Aplicativos_Mayor_Uso(APLICATIVOS_USO)
+            st.plotly_chart(ROSA, use_container_width=True)
+            
+########################
+
+        st.success('RIESGO POR APLICATIVOS - DESCONCENTRADA, PUESTO y EMPLEADO')
+
+        st.markdown("""<p style="text-align: justify; font-size: 16px; font-style: italic;">
+                    La tabla proporciona una descripción detallada de la información referente al empleado, 
+                    incluyendo el puesto que ocupa, el aplicativo utilizado, los roles asignados y 
+                    el alcance de las funciones que desempeña en cada uno de estos roles.</p>""", unsafe_allow_html=True)
+        st.write('Seleccionar y aplicar por:')
         
 ## Filtro por puesto
-        PT1 = BASE_USO_F3["PUESTO_NOM"].unique().tolist()
-        PT2 = PT1[:]
-        PT2.append('TODOS')
-        PUESTO_drop = st.multiselect('PUESTO', PT2, default = 'TODOS', key='PUESTO_drop')
-        if 'TODOS' in PUESTO_drop:
-            PUESTO_drop = PT1
-        else:
-            PUESTO_drop = [r for r in PUESTO_drop if r in PT1]
-            
-## Aplicar filtro de puesto
-        BASE_USO_F4 = BASE_USO_F3.query("PUESTO_NOM == @PUESTO_drop")
+        FIL1, FIL2 = st.columns([1,1])
 
-## Filtro por empleado
-        ET1 = BASE_USO_F4["NOMBRE_EMP"].unique().tolist()
-        ET2 = ET1[:]
-        ET2.append('TODOS')
-        EMPLET_drop = st.multiselect('EMPLEADO', ET2, default = 'TODOS', key='EMPLET_drop')
-        if 'TODOS' in EMPLET_drop:
-            EMPLET_drop = ET1
-        else:
-            EMPLET_drop = [s for s in EMPLET_drop if s in ET1]
+        with FIL1:
+            PT1 = BASE_USO_F3["PUESTO_NOM"].unique().tolist()
+            PT2 = PT1[:]
+            PT2.append('TODOS')
+            PUESTO_drop = st.multiselect('PUESTO', PT2, default = 'TODOS', key='PUESTO_drop')
+            if 'TODOS' in PUESTO_drop:
+                PUESTO_drop = PT1
+            else:
+                PUESTO_drop = [r for r in PUESTO_drop if r in PT1]
+
+## Aplicar filtro de puesto
+        BASE_USO_F4 = BASE_USO_F3.query("PUESTO_NOM == @PUESTO_drop")        
+
+
+        with FIL2:
+            ET1 = BASE_USO_F4["NOMBRE_EMP"].unique().tolist()
+            ET2 = ET1[:]
+            ET2.append('TODOS')
+            EMPLET_drop = st.multiselect('EMPLEADO', ET2, default = 'TODOS', key='EMPLET_drop')
+            if 'TODOS' in EMPLET_drop:
+                EMPLET_drop = ET1
+            else:
+                EMPLET_drop = [s for s in EMPLET_drop if s in ET1]
 
 ## Aplicar filtro de empleado
         BASE_USO_F5 = BASE_USO_F4.query("NOMBRE_EMP == @EMPLET_drop")
         
-## Obtener tabla de aplicaciones y servicios por empleado
-        TABLA_APPS =  Tabla_App_Servicos(BASE_USO_F5)
-## Mostrar gráfico de la tabla de aplicaciones y servicios
-        st.plotly_chart(TABLA_APPS, use_container_width=True)
 
-## Texto temporal (se puede reemplazar con información relevante)
-        st.write('BLABLAHHH  ')
+## Obtener tabla de aplicaciones y servicios por empleado
+        LA_TABLA, export_df = Tabla_App_Servicos(BASE_USO_F5)
+## Mostrar gráfico de la tabla de aplicaciones y servicios
+        st.plotly_chart(LA_TABLA, use_container_width=True)
+
+        st.download_button(label = "DESCARGAR TABLA",
+                           data = Tabla_to_Excel(export_df),
+                           file_name = 'Tabla_Empleado_App.xlsx',
+                           mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
