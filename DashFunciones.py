@@ -6,6 +6,7 @@
 
 import numpy as np
 import pandas as pd
+from io import BytesIO
 import geopandas as gpd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -146,7 +147,7 @@ def Riesgo_Puestos_Menu (Tabla):
                                      xanchor = "center",
                                      x = 0.5,
                                      title_font = dict(size = 10),
-                                     font = dict(size = 8),
+                                     font = dict(size = 10),
                                      traceorder = "normal")
                         )
     
@@ -157,7 +158,7 @@ def Riesgo_Puestos_Menu (Tabla):
     BARRAS.update_layout(title_font_size = 15,
                               title_x = 0.5,
                               font = dict(family = "Montserrat",
-                                          size = 13,
+                                          size = 16,
                                           color = '#000000')
                         )
     BARRAS.update_layout(title_text="",
@@ -445,7 +446,7 @@ def Accesos_Aplicaticos(Tabla):
                                   'x': 0.5, 
                                   'xanchor': 'center', 
                                   'font': {'family': "Montserrat",
-                                  'size': 16}
+                                  'size': 12}
                                 },
                          font = dict( family = "Montserrat",
                                      size = 10,
@@ -466,7 +467,14 @@ def Aplicativos_Mayor_Uso(Tabla):
     
     cmap = mcolors.LinearSegmentedColormap.from_list("", ['#990033', '#808080', '#006666'])
     num_classes = len(Tabla.APLICATIVO)
-    colors = [mcolors.to_hex(cmap(i / (num_classes - 1))) for i in range(num_classes)]
+    #colors = [mcolors.to_hex(cmap(i / (num_classes - 1))) for i in range(num_classes)]
+
+
+    if num_classes > 1:
+        colors = [mcolors.to_hex(cmap(i/(num_classes -1))) for i in range(num_classes)]
+    else:
+        colors = [mcolors.to_hex(cmap(0))]
+
     
     num_slices = len(r)
     theta = [(i + 0.5) * 360 / num_slices for i in range(num_slices)]
@@ -528,11 +536,11 @@ def Aplicativos_Mayor_Uso(Tabla):
                                        xanchor = "center",
                                        x = 0.5,
                                        title_font = dict(size = 12),
-                                       font = dict(size = 10),
+                                       font = dict(size = 8),
                                        traceorder = "normal"),
                            width = 1000,
                            height = 600,
-                           margin = {"r": 40, "t": 40, "l": 40, "b": 40}
+                           margin = {"r": 0, "t": 0, "l": 0, "b": 0}
                           )
     return (ROSE_USO)
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -570,8 +578,8 @@ def Total_Aplicativo(Tabla):
     TOTAL_APP.update_layout(plot_bgcolor = 'white', 
                             xaxis_title = "",
                             yaxis_title = "No. Aplicativos",
-                            yaxis = dict(showticklabels = False), 
-                            xaxis = dict(showticklabels = False,
+                            yaxis = dict(showticklabels = False, visible=False), 
+                            xaxis = dict(showticklabels = False, visible=True,
                                        categoryorder = 'total descending'),
                             margin = {"r": 0, "t": 0, "l": 0, "b": 0}, 
                             legend_title_text = 'Puestos',
@@ -585,13 +593,13 @@ def Total_Aplicativo(Tabla):
                                         traceorder = "normal"
                                        )
                            )
-    TOTAL_APP.layout.legend.update(title = dict(text = 'Puestos',
+    TOTAL_APP.layout.legend.update(title = dict(text = 'Desconcentrada',
                                                 font = dict(size = 12), 
                                                 side = 'top'))
     TOTAL_APP.update_layout(title_font_size = 10,
                             title_x = 0.5,
                             font = dict(family = "Montserrat",
-                                        size = 12,
+                                        size = 16,
                                         color = '#000000')
                            )
     return (TOTAL_APP)
@@ -676,22 +684,22 @@ def Puestos_Mayor_sistemas(Tabla):
                               yaxis = dict(showticklabels = False), 
                               xaxis = dict(showticklabels = False,
                                            categoryorder = 'total descending'),
-                              margin = {"r": 30, "t": 30, "l": 30, "b": 30}, 
+                              margin = {"r": 0, "t": 0, "l": 0, "b": 0}, 
                               legend_title_text = 'Puestos',
                               legend=dict(orientation = "h",
                                           yanchor = "top",
                                           y = -0.1,
                                           xanchor = "center",
                                           x = 0.5,
-                                          title_font = dict(size = 12),
+                                          title_font = dict(size = 10),
                                           font = dict(size = 10),
                                           traceorder = "normal"
                                          )
                              )
     BAR_PUESTOS.layout.legend.update(title = dict(text = 'Puestos',
                                                   font = dict(size = 12), 
-                                                  side = 'left'))
-    BAR_PUESTOS.update_layout(title_font_size = 10,
+                                                  side = 'top'))
+    BAR_PUESTOS.update_layout(title_font_size = 12,
                               title_x = 0.5,
                               font = dict(family = "Montserrat",
                                           size = 12,
@@ -750,7 +758,12 @@ def Tabla_App_Servicos(Tabla):
                                ]
                         )
     LA_TABLA.update_layout(title_font_size=12,
-                           title_x=0.5,
+                           title = {'text': "",
+                                     'x': 0.5, 
+                                     'xanchor': 'center', 
+                                     'font': {'family': "Montserrat",
+                                     'size': 12}
+                                },
                            font=dict(family="Montserrat",
                                      size=12,
                                      color='#000000'),
@@ -758,8 +771,20 @@ def Tabla_App_Servicos(Tabla):
                            margin={"r": 10, "t": 30, "l": 10, "b": 0},
                            uniformtext=dict(minsize=10, mode='hide')
                           )
-    return (LA_TABLA)
+
+     # Crear un DataFrame para exportar
+    export_df = pd.DataFrame({
+        'Nombre Empleado': nombre_emp,
+        'RFC corto': rfc_corto,
+        'Puesto': puesto_nom,
+        'Aplicativo': aplicativo,
+        'ROL': rol_app,
+        'Alcance ROL': alcance_rol
+    })
+
+    return (LA_TABLA, export_df)
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #>
@@ -796,3 +821,16 @@ def Tabla_Denuncias(Tabla):
                           )                     
     return (fig)
 
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
+
+def Tabla_to_Excel(df):
+            output = BytesIO()
+            writer = pd.ExcelWriter(output, engine='xlsxwriter')
+            df.to_excel(writer, index=False, sheet_name='Sheet1')
+            writer.close()  # Usar close en lugar de save
+            processed_data = output.getvalue()
+            return processed_data
