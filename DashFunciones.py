@@ -93,7 +93,12 @@ def Puestos_Menu(Tabla):
                          hovertemplate=None, hoverinfo= 'none')
     
     PASTEL.update_layout(title_font_size = 15,
-                         title_x = 0.5,
+                         title = {'text': "PUESTOS EN RIESGO",
+                                  'x': 0.5, 
+                                  'xanchor': 'center', 
+                                  'font': {'family': "Montserrat",
+                                  'size': 16}
+                                  },
                          font = dict(family = "Montserrat",
                                      size = 13,
                                      color = '#000000'))
@@ -420,7 +425,7 @@ def Accesos_Aplicaticos(Tabla):
     
     max_value = Tabla['ROL_APP'].max()
     
-    pull_values = [0.1 if val > 0.80 * max_value else 0 for val in Tabla['ROL_APP']]
+    pull_values = [0.05 if val > 0.80 * max_value else 0 for val in Tabla['ROL_APP']]
     
     PASTEL = px.pie(Tabla,
                     names = 'APLICATIVO',
@@ -614,7 +619,7 @@ def Puestos_Aplicativos (Tabla):
     colors = [mcolors.to_hex(cmap(i / (num_apps - 1))) for i in range(num_apps)]
 
     max_value = Tabla['APLICATIVO'].max()
-    pull_values = [0.1 if val > 0.9 * max_value else 0 for val in Tabla['APLICATIVO']]
+    pull_values = [0.05 if val > 0.9 * max_value else 0 for val in Tabla['APLICATIVO']]
 
     PASTEL_APP = px.pie(Tabla,
                         names = 'PUESTO_NOM',
@@ -834,3 +839,121 @@ def Tabla_to_Excel(df):
             writer.close()  # Usar close en lugar de save
             processed_data = output.getvalue()
             return processed_data
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
+
+def Info_Denuncias(Tabla):
+    def Rename_SAT(Data, Pre, Letra):
+        Name = ['{}{}'.format(Pre, Letra.format(i+1)) for i in range(len(Data.columns))]
+        Dict = dict(zip(Data.columns, Name))
+        Data = Data.rename(columns=Dict)
+        return Data
+        
+    Tabla = Rename_SAT(Tabla, 'D', '{}')
+    
+    D7 = Tabla.groupby(['D1','D7'])['D7'].count().sum()
+    
+    D9 = Tabla.D9.value_counts().reset_index().rename({'count':'VALUE'}, axis = 1)
+
+    D10 = Tabla.D10.value_counts().reset_index().rename({'count':'VALUE'}, axis = 1)
+
+    return D7, D9, D10
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
+
+def Velo_Denucias (Tabla):
+    ''' '''
+    Q_D = ['Denuncia', 'Queja']
+    
+    Tabla = Tabla[Tabla['D10'].isin(Q_D)]
+    
+    Vel = go.Figure()
+
+    max_value = Tabla['VALUE'].max() * 1.1
+    
+    for i, row in Tabla.iterrows():
+        Vel.add_trace(go.Indicator(mode = "gauge+number",
+                                   value = row['VALUE'],
+                                   title = {"text": row['D10']},
+                                   gauge = {'axis': {'range': [0, max_value]},
+                                            'bar': {'color': "#006666"},
+                                            'steps': [{'range': [0, max_value], 
+                                                       'color': "#F1F1E8"}],
+                                            'threshold': {'line': {'color': "#ad0303", 'width': 4},
+                                                          'thickness': 0.75,
+                                                          'value': max_value * 0.9
+                                                          }
+                                           },
+                                   domain = {'row': i // 3, 'column': i % 3}
+                                  )
+                     )
+        
+    Vel.update_layout(grid = {'rows': (len(Tabla) + 4) // 4, 
+                              'columns': 2, 'pattern': "independent"},
+                      title='Denuncias y Quejas'
+                     )
+    
+    Vel.update_layout(title_font_size = 10,
+                      title = {'text': "",
+                               'x': 0.5, 
+                               'xanchor': 'center', 
+                               'font': {'family': "Montserrat",
+                               'size': 12}
+                               },
+                      font = dict(family = "Montserrat",
+                                  size = 13,
+                                  color = '#000000')
+                     )
+    return (Vel)
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#>
+
+def Dona_Clase(Tabla):
+    ''' '''
+    cmap = mcolors.LinearSegmentedColormap.from_list("", ['#990033', '#808080', '#006666'])
+    num_apps = len(Tabla)
+    
+    if num_apps > 1:
+        colors = [mcolors.to_hex(cmap(i / (num_apps - 1))) for i in range(num_apps)]
+        max_value = Tabla['VALUE'].max()
+        pull_values = [0.05 if val > 0.80 * max_value else 0 for val in Tabla['VALUE']]
+    else:
+        colors = [mcolors.to_hex(cmap(0))]
+        pull_values = [0] 
+
+    Dona_Clase = px.pie(Tabla,
+                        names='D9',
+                        values='VALUE')
+    
+    Dona_Clase.update_traces(pull = pull_values,
+                             marker = dict(colors = colors, 
+                                           line = dict(color = '#FFFFFF', width = 0.5)),
+                             textposition ='outside',
+                             textinfo ='label+percent', 
+                             insidetextorientation = 'radial',
+                             hovertemplate = None, 
+                             hoverinfo='none') 
+    
+    Dona_Clase.update_layout(title_font_size=12,
+                             title = {'text': "",
+                                      'x': 0.5, 
+                                      'xanchor': 'center', 
+                                      'font': {'family': "Montserrat",
+                                      'size': 12}
+                                      },
+                             font = dict(family = "Montserrat", size = 12, color='#000000'),
+                             template=None, 
+                             showlegend=False,
+                             margin={"r": 40, "t": 40, "l":40, "b": 50},
+                             uniformtext = dict(minsize = 8, mode = 'hide'))
+    
+    return (Dona_Clase)
