@@ -13,7 +13,8 @@ from DashFunciones import Riesgo_Puestos_Menu, Quejas_Denuncias_Riesgos, Cofiabi
 from DashFunciones import Nivel_Riesgos_Atencion, Queja_Denuncia, Detalle_Aplicativos
 from DashFunciones import Tabla_Aplicativos, Accesos_Aplicaticos, Aplicativos_Mayor_Uso
 from DashFunciones import Total_Aplicativo, Puestos_Aplicativos, Puestos_Mayor_sistemas
-from DashFunciones import Tabla_App_Servicos, Tabla_to_Excel
+from DashFunciones import Tabla_App_Servicos, Tabla_to_Excel, Info_Denuncias
+from DashFunciones import Velo_Denucias, Dona_Clase
 
 
 from DashContent import Content_Map, Content_Dona, Content_Barras
@@ -131,6 +132,7 @@ def read_map(uploaded_file):
 ## Lectura de datos y mapa
 BASE_USO = read_data(Entradas + "BASEP.pkl")
 Spatial = read_map(Entradas + 'UAD_FILE.json')
+DENUNCIAS_P = read_data(Entradas + "DENUNCIAS.pkl")
 
 #%%%%%%%%%%%%%%%%%%%
 
@@ -167,7 +169,7 @@ with tab1:
 
 ## Crear columnas para organizar el layout
     #plot_tab, plot_ries = st.columns(2)
-    AP1, AP2 = st.columns([2, 1])
+    AP1, AP2 = st.columns([2, 2])
 
 ## Mostrar mapa en la columna izquierda
     with AP1:
@@ -175,26 +177,28 @@ with tab1:
 
 ## Mostrar texto con unidad administrativa en la columna derecha
     with AP2:
-        MAPA_CONTENT = Content_Map(CVE_UNIDAD, UNIDAD)
-        st.markdown(MAPA_CONTENT, unsafe_allow_html=True)
+        st.plotly_chart(Dona_Riesgos, use_container_width=True)
+        #MAPA_CONTENT = Content_Map(CVE_UNIDAD, UNIDAD)
+        #st.markdown(MAPA_CONTENT, unsafe_allow_html=True)
 
 
 ## Invertir el orden de las columnas
-    BP1, BP2 = st.columns([1, 2])
-    plot_ries, plot_tab = st.columns(2)
+    BP1, BP2, BP3 = st.columns([1,1,1])
 
-## Mostrar texto temporal (BLABLAHHH) en la columna izquierda
     with BP1:
-        DONA_CONTENT = Content_Dona(DON_VAL)
-        st.markdown(DONA_CONTENT, unsafe_allow_html=True)
+        MAPA_CONTENT = Content_Map(CVE_UNIDAD, UNIDAD)
+        st.markdown(MAPA_CONTENT, unsafe_allow_html=True)        
+        #DONA_CONTENT = Content_Dona(DON_VAL)
+        #st.markdown(DONA_CONTENT, unsafe_allow_html=True)
 
 ## Mostrar gráfico de dona de riesgos en la columna derecha
     with BP2:
-        st.plotly_chart(Dona_Riesgos, use_container_width=True)
+        DONA_CONTENT = Content_Dona(DON_VAL)
+        st.markdown(DONA_CONTENT, unsafe_allow_html=True)
 
-## Mostrar texto temporal (BLABLAHHH) debajo del gráfico
-    BARRA_CONTENT = Content_Barras(SI)
-    st.markdown(BARRA_CONTENT, unsafe_allow_html=True)
+    with BP3:
+        BARRA_CONTENT = Content_Barras(SI)
+        st.markdown(BARRA_CONTENT, unsafe_allow_html=True)
 
 ## Mostrar gráfico de barras de riesgos en toda la fila
     st.plotly_chart(Barras_Riesgo, use_container_width=True)
@@ -402,7 +406,7 @@ with tab3:
 
     A1 = BASE_USO["DESCONCENTRADA"].unique().tolist()
     A2  = []
-    A2 = l1[:]
+    A2 = A1[:]
     A2.append('TODAS')
     Deconc_drop = st.multiselect('DESCONCENTRADA', A2, default = 'TODAS', key='Deconc_drop')
     if 'TODAS' in Deconc_drop:
@@ -502,7 +506,58 @@ with tab3:
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #>
 with tab4:
-    st.write("Contenido de Denuncias")
+
+    DEN1, DEN2 = st.columns([1,1])
+
+    with DEN1:
+        min_year = DENUNCIAS_P['Año'].min()
+        max_year = DENUNCIAS_P['Año'].max()
+        
+        year_range = st.slider("AÑO:",
+                               min_value = min_year, 
+                               max_value = max_year, 
+                               value = (min_year, max_year))
+                               
+        BASE_FILTRADA = DENUNCIAS_P[(DENUNCIAS_P['Año'] >= year_range[0]) & 
+                                    (DENUNCIAS_P['Año'] <= year_range[1])]
+
+    with DEN2:
+        EDE1 = BASE_FILTRADA["NOMBRE"].unique().tolist()
+        EDE2 = EDE1[:]
+        EDE2.append('TODOS')
+        EMPDEN_drop = st.multiselect('EMPLEADO', EDE2, default = 'TODOS', key='EMPDEN_drop')
+        if 'TODOS' in EMPDEN_drop:
+            EMPDEN_drop = EDE1
+        else:
+            EMPDEN_drop = [md for md in EMPDEN_drop if md in EDE1]
+        
+        DENU_EMPLE = BASE_FILTRADA.query("NOMBRE == @EMPDEN_drop")
+
+
+    D7, D9, D10 = Info_Denuncias(DENU_EMPLE)
+
+    st.metric('Total de Folios', D7)
+
+    MEN1, MEN2 = st.columns([2,1])
+
+    with MEN1:
+        Velocimetro = Velo_Denucias (D10)
+        st.plotly_chart(Velocimetro, use_container_width=True)
+
+    with MEN2:
+        st.write('Generar contenedor de interpretación')
+
+    NEN1, NEN2 = st.columns([1,2.5])
+
+    with NEN1:
+        st.write('Generar contenedor de interpretación')
+
+    with NEN2:
+        Clasifica_Dona = Dona_Clase (D9)
+        st.plotly_chart(Clasifica_Dona, use_container_width=True)
+
+
+
 
 
 hide_streamlit_style = """
